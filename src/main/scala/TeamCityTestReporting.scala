@@ -25,7 +25,7 @@ class TeamCityTestListener extends TestReportListener {
         case TResult.Error | TResult.Failure =>
           teamcityReport("testFailed",
             "name" -> e.testName,
-            "details" -> (e.error.toString + " " + e.error.getStackTrace().mkString(" at ", " at ", "")))
+            "details" -> (e.error.toString.replace("\n", " ").replace("'", "\"") + " " + e.error.getStackTrace().mkString(" at ", " at ", "")))
         case TResult.Skipped =>
           teamcityReport("testIgnored", "name" -> e.testName)
       }
