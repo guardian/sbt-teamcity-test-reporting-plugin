@@ -15,7 +15,10 @@ publishTo <<= (version) { version: String =>
     Some(
         Resolver.file(
             "guardian github " + publishType,
-            file(System.getProperty("user.home")) / "guardian.github.com" / "maven" / publishType)
+            file(System.getProperty("user.home")) / "guardian.github.com" / "maven" / publishType
         )
     )
 }
+
+
+version := "1.1-SNAPSHOT"
