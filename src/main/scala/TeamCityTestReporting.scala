@@ -3,17 +3,22 @@ package com.gu
 import sbt._
 import org.scalatools.testing.{Event => TEvent, Result => TResult}
 
+import Keys._
 
-trait TeamCityTestReporting extends BasicScalaProject {
-  override def testListeners = super.testListeners ++ TeamCityTestListener.ifRunningUnderTeamCity
+object TeamCityTestReporting extends Plugin {
+  override def settings = Seq(
+    testListeners ++= TeamCityTestListener.ifRunningUnderTeamCity
+  )
 }
 
 class TeamCityTestListener extends TestReportListener {
   /** called for each class or equivalent grouping */
-  def startGroup(name: String) = teamcityReport("testSuiteStarted", "name" -> name )
+  def startGroup(name: String) {
+    teamcityReport("testSuiteStarted", "name" -> name)
+  }
 
   /** called for each test method or equivalent */
-  def testEvent(event: TestEvent) = {
+  def testEvent(event: TestEvent) {
     for (e: TEvent <- event.detail) {
 
       // this is a lie: the test has already been executed and started by this point,
@@ -25,7 +30,8 @@ class TeamCityTestListener extends TestReportListener {
         case TResult.Error | TResult.Failure =>
           teamcityReport("testFailed",
             "name" -> e.testName,
-            "details" -> (e.error.toString.replace("\n", " ").replace("'", "\"") + " " + e.error.getStackTrace().mkString(" at ", " at ", "")))
+            "details" -> (e.error.toString +
+              "\n" + e.error.getStackTrace.mkString("\n at ", "\n at ", "")))
         case TResult.Skipped =>
           teamcityReport("testIgnored", "name" -> e.testName)
       }
@@ -37,19 +43,36 @@ class TeamCityTestListener extends TestReportListener {
 
 
   /** called if there was an error during test */
-  def endGroup(name: String, t: Throwable) = teamcityReport("testSuiteFinished", "name" -> name)
+  def endGroup(name: String, t: Throwable) {
+    teamcityReport("testSuiteFinished", "name" -> name)
+  }
   /** called if test completed */
-  def endGroup(name: String, result: Result.Value) = teamcityReport("testSuiteFinished", "name" -> name)
+  def endGroup(name: String, result: TestResult.Value) {
+    teamcityReport("testSuiteFinished", "name" -> name)
+  }
 
-  private def teamcityReport(messageName: String, attributes: (String, String)*) =
-    println("##teamcity["+ messageName +" "+ attributes.map{ case (k, v) => k +"='"+ v +"'" }.mkString(" ") + "]")
+
+  // http://confluence.jetbrains.net/display/TCD65/Build+Script+Interaction+with+TeamCity
+  def tidy(s: String) = s
+    .replace("|", "||")
+    .replace("'", "|'")
+    .replace("\n", "|n")
+    .replace("\r", "|r")
+    .replace("\u0085", "|x")
+    .replace("\u2028", "|l")
+    .replace("\u2029", "|p")
+    .replace("[", "|[")
+    .replace("]", "|]")
+
+  private def teamcityReport(messageName: String, attributes: (String, String)*) {
+    println("##teamcity[" + messageName + " " + attributes.map {
+      case (k, v) => k + "='" + tidy(v) + "'"
+    }.mkString(" ") + "]")
+  }
 }
 
 object TeamCityTestListener {
-  // this is nicer in 2.8 with Option.apply ...
-  private lazy val teamCityProjectName = Some(System.getenv("TEAMCITY_PROJECT_NAME")).filter(_ != null)
-  lazy val ifRunningUnderTeamCity = teamCityProjectName.map(ignore => new TeamCityTestListener)
-
-  println("teamcityprojectname = " + teamCityProjectName)
-
+  // teamcity se
+  private lazy val teamCityProjectName = Option(System.getenv("TEAMCITY_PROJECT_NAME"))
+  lazy val ifRunningUnderTeamCity = teamCityProjectName.map(ignore => new TeamCityTestListener).toSeq
 }
