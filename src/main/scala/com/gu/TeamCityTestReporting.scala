@@ -76,3 +76,6 @@ object TeamCityTestListener {
   private lazy val teamCityProjectName = Option(System.getenv("TEAMCITY_PROJECT_NAME"))
   lazy val ifRunningUnderTeamCity = teamCityProjectName.map(ignore => new TeamCityTestListener).toSeq
 }
+
+
+
