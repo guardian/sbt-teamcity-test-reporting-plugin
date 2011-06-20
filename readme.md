@@ -11,7 +11,7 @@ To use, add the plugin to your `project/plugins/build.sbt`:
 
     resolvers += "Guardian Github Releases" at "http://guardian.github.com/maven/repo-releases"
 
-    libraryDependencies += "com.gu" %% "sbt-version-info-plugin" % "1.0"
+    libraryDependencies += "com.gu" %% "sbt-teamcity-test-reporting-plugin" % "1.0"
 
 
 It will do nothing at all when not running under TeamCity, but
