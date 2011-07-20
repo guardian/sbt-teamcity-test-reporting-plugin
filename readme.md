@@ -7,11 +7,20 @@ This uses the [simple mechanism](http://confluence.jetbrains.net/display/TCD65/B
 built into TeamCity to provide information about build progress, combined with the test listener
 mechanism in sbt.
 
-To use, add the plugin to your `project/plugins/build.sbt`:
+To use,
 
-    resolvers += "Guardian Github Releases" at "http://guardian.github.com/maven/repo-releases"
+1. Work out what released version you want to use by looking at the tags list for this repository.
 
-    libraryDependencies += "com.gu" %% "sbt-teamcity-test-reporting-plugin" % "1.0"
+2. Add the plugin to your sbt build, by creating project/plugins/project/plugins.scala that looks like:
+
+        import sbt._
+
+        object Plugins extends Build {
+          lazy val plugins = Project("plugins", file("."))
+            .dependsOn(
+              uri("git://github.com/guardian/sbt-teamcity-test-reporting-plugin.git#1.0")
+            )
+        }
 
 
 It will do nothing at all when not running under TeamCity, but
