@@ -14,7 +14,10 @@ object TeamCityTestReporting extends Plugin {
 class TeamCityTestListener extends TestReportListener {
   /** called for each class or equivalent grouping */
   def startGroup(name: String) {
-    teamcityReport("testSuiteStarted", "name" -> name)
+    // we can't report to teamcity that a test group has started here,
+    // because even if parallel test execution is enabled there may be multiple
+    // projects running tests at the same time. So if you tell TC that a test
+    // group has started, the tests from different projects will get mixed up.
   }
 
   /** called for each test method or equivalent */
@@ -43,13 +46,9 @@ class TeamCityTestListener extends TestReportListener {
 
 
   /** called if there was an error during test */
-  def endGroup(name: String, t: Throwable) {
-    teamcityReport("testSuiteFinished", "name" -> name)
-  }
+  def endGroup(name: String, t: Throwable) { }
   /** called if test completed */
-  def endGroup(name: String, result: TestResult.Value) {
-    teamcityReport("testSuiteFinished", "name" -> name)
-  }
+  def endGroup(name: String, result: TestResult.Value) { }
 
 
   // http://confluence.jetbrains.net/display/TCD65/Build+Script+Interaction+with+TeamCity
