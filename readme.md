@@ -19,7 +19,6 @@ To use,
           lazy val plugins = Project("plugins", file("."))
             .dependsOn(
               uri("git://github.com/guardian/sbt-teamcity-test-reporting-plugin.git#1.1")
-1
             )
         }
 
