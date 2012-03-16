@@ -4,6 +4,7 @@ import sbt._
 import org.scalatools.testing.{Event => TEvent, Result => TResult}
 
 import Keys._
+import java.io.{PrintWriter, StringWriter}
 
 object TeamCityTestReporting extends Plugin {
   override def settings = Seq(
@@ -15,9 +16,17 @@ class TeamCityTestListener extends TestReportListener {
   /** called for each class or equivalent grouping */
   def startGroup(name: String) {
     // we can't report to teamcity that a test group has started here,
-    // because even if parallel test execution is enabled there may be multiple
-    // projects running tests at the same time. So if you tell TC that a test
-    // group has started, the tests from different projects will get mixed up.
+    // because even if parallel test execution is disabled there may be multiple
+    // projects running tests from different projects at the same time.
+    // So if you tell TC that a test group has started, the tests from
+    // different projects will get mixed up.
+  }
+
+  def nicelyFormatException(t: Throwable) = {
+    val w = new StringWriter
+    val p = new PrintWriter(w)
+    t.printStackTrace(p)
+    w.toString
   }
 
   /** called for each test method or equivalent */
@@ -33,8 +42,8 @@ class TeamCityTestListener extends TestReportListener {
         case TResult.Error | TResult.Failure =>
           teamcityReport("testFailed",
             "name" -> e.testName,
-            "details" -> (e.error.toString +
-              "\n" + e.error.getStackTrace.mkString("\n at ", "\n at ", "")))
+            "details" -> nicelyFormatException(e.error())
+          )
         case TResult.Skipped =>
           teamcityReport("testIgnored", "name" -> e.testName)
       }

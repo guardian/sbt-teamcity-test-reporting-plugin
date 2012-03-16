@@ -7,7 +7,7 @@ name := "sbt-teamcity-test-reporting-plugin"
 
 organization := "com.gu"
 
-version := "1.0"
+version := "1.2"
 
 
 publishTo <<= (version) { version: String =>
@@ -19,6 +19,3 @@ publishTo <<= (version) { version: String =>
         )
     )
 }
-
-
-version := "1.1-SNAPSHOT"
