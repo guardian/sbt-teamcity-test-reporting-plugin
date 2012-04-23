@@ -33,23 +33,27 @@ class TeamCityTestListener extends TestReportListener {
   def testEvent(event: TestEvent) {
     for (e: TEvent <- event.detail) {
 
-      // this is a lie: the test has already been executed and started by this point,
-      // but sbt doesn't send an event when test starts
-      teamcityReport("testStarted", "name" -> e.testName)
+      // TC seems to get a bit upset if you start a test while one is already running
+      // so a nasty bit of synchronisation here to stop that happening
+      synchronized {
+        // this is a lie: the test has already been executed and started by this point,
+        // but sbt doesn't send an event when test starts
+        teamcityReport("testStarted", "name" -> e.testName)
 
-      e.result match {
-        case TResult.Success => // nothing extra to report
-        case TResult.Error | TResult.Failure =>
-          teamcityReport("testFailed",
-            "name" -> e.testName,
-            "details" -> nicelyFormatException(e.error())
-          )
-        case TResult.Skipped =>
-          teamcityReport("testIgnored", "name" -> e.testName)
+        e.result match {
+          case TResult.Success => // nothing extra to report
+          case TResult.Error | TResult.Failure =>
+            teamcityReport("testFailed",
+              "name" -> e.testName,
+              "details" -> nicelyFormatException(e.error())
+            )
+          case TResult.Skipped =>
+            teamcityReport("testIgnored", "name" -> e.testName)
+        }
+
+        teamcityReport("testFinished", "name" -> e.testName)
+
       }
-
-      teamcityReport("testFinished", "name" -> e.testName)
-
     }
   }
 
