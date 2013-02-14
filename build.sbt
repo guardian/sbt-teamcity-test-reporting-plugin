@@ -1,21 +1,12 @@
-
-
-sbtPlugin := true
-
-
 name := "sbt-teamcity-test-reporting-plugin"
 
 organization := "com.gu"
 
-version := "1.2"
+sbtPlugin := true
 
+releaseSettings
 
-publishTo <<= (version) { version: String =>
-    val publishType = if (version.endsWith("SNAPSHOT")) "repo-snapshots" else "repo-releases"
-    Some(
-        Resolver.file(
-            "guardian github " + publishType,
-            file(System.getProperty("user.home")) / "guardian.github.com" / "maven" / publishType
-        )
-    )
-}
+publishTo := Some(Resolver.url("scala-sbt-plugin-releases", new URL("http://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns))
+
+publishMavenStyle := false
+
