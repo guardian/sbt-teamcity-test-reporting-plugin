@@ -6,9 +6,10 @@ sbtPlugin := true
 
 releaseSettings
 
-publishTo <<= (version) { version: String =>
+publishTo := {
+  val isSnapshot = version.value.contains("-SNAPSHOT")
   val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
-  val (name, url) = if (version.contains("-SNAPSHOT"))
+  val (name, url) = if (isSnapshot)
     ("sbt-plugin-snapshots", scalasbt+"sbt-plugin-snapshots")
   else
     ("sbt-plugin-releases", scalasbt+"sbt-plugin-releases")
