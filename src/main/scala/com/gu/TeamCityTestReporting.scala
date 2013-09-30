@@ -1,7 +1,7 @@
 package com.gu
 
 import sbt._
-import org.scalatools.testing.{Event => TEvent, Result => TResult}
+import sbt.testing.{Event, OptionalThrowable, Status}
 
 import Keys._
 import java.io.{PrintWriter, StringWriter}
@@ -22,37 +22,41 @@ class TeamCityTestListener extends TestReportListener {
     // different projects will get mixed up.
   }
 
-  def nicelyFormatException(t: Throwable) = {
-    val w = new StringWriter
-    val p = new PrintWriter(w)
-    t.printStackTrace(p)
-    w.toString
+  def nicelyFormatException(t: OptionalThrowable) = {
+    if (t.isDefined) {
+      val w = new StringWriter
+      val p = new PrintWriter(w)
+      t.get.printStackTrace(p)
+      w.toString
+    } else ""
   }
 
   /** called for each test method or equivalent */
   def testEvent(event: TestEvent) {
-    for (e: TEvent <- event.detail) {
+    for (e: Event <- event.detail) {
 
       // TC seems to get a bit upset if you start a test while one is already running
       // so a nasty bit of synchronisation here to stop that happening
       synchronized {
         // this is a lie: the test has already been executed and started by this point,
         // but sbt doesn't send an event when test starts
-        teamcityReport("testStarted", "name" -> e.testName)
+        teamcityReport("testStarted", "name" -> e.fullyQualifiedName)
 
-        e.result match {
-          case TResult.Success => // nothing extra to report
-          case TResult.Error | TResult.Failure =>
+        e.status match {
+          case Status.Success => // nothing extra to report
+          case Status.Error | Status.Failure =>
             teamcityReport("testFailed",
-              "name" -> e.testName,
-              "details" -> nicelyFormatException(e.error())
+              "name" -> e.fullyQualifiedName,
+              "details" -> nicelyFormatException(e.throwable)
             )
-          case TResult.Skipped =>
-            teamcityReport("testIgnored", "name" -> e.testName)
+          case Status.Skipped | Status.Ignored | Status.Pending=>
+            teamcityReport("testIgnored", "name" -> e.fullyQualifiedName)
+          case Status.Canceled =>
+            // I can't think how this would happen and no appropriate message for Teamcity
+            println(s"Test:${e.fullyQualifiedName} was cancelled")
         }
 
-        teamcityReport("testFinished", "name" -> e.testName)
-
+        teamcityReport("testFinished", "name" -> e.fullyQualifiedName)
       }
     }
   }
@@ -77,14 +81,14 @@ class TeamCityTestListener extends TestReportListener {
     .replace("]", "|]")
 
   private def teamcityReport(messageName: String, attributes: (String, String)*) {
-    println("##teamcity[" + messageName + " " + attributes.map {
-      case (k, v) => k + "='" + tidy(v) + "'"
-    }.mkString(" ") + "]")
+    val attributeString = attributes.map {
+      case (k, v) => s"$k='${tidy(v)}'"
+    }.mkString(" ")
+    println(s"##teamcity[$messageName $attributeString]")
   }
 }
 
 object TeamCityTestListener {
-  // teamcity se
   private lazy val teamCityProjectName = Option(System.getenv("TEAMCITY_PROJECT_NAME"))
   lazy val ifRunningUnderTeamCity = teamCityProjectName.map(ignore => new TeamCityTestListener).toSeq
 }
