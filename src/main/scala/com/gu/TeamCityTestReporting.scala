@@ -1,7 +1,7 @@
 package com.gu
 
 import sbt._
-import sbt.testing.{Event, OptionalThrowable, Status}
+import sbt.testing.{TestSelector, Event, OptionalThrowable, Status}
 
 import Keys._
 import java.io.{PrintWriter, StringWriter}
@@ -38,25 +38,33 @@ class TeamCityTestListener extends TestReportListener {
       // TC seems to get a bit upset if you start a test while one is already running
       // so a nasty bit of synchronisation here to stop that happening
       synchronized {
+
+        val testName = e.selector match {
+          case s: TestSelector => s.testName
+          // I can't think when you would have anything other than a TestSelector, but
+          // try to do something vaguely useful in that case
+          case _ => e.fullyQualifiedName
+        }
+
         // this is a lie: the test has already been executed and started by this point,
         // but sbt doesn't send an event when test starts
-        teamcityReport("testStarted", "name" -> e.fullyQualifiedName)
+        teamcityReport("testStarted", "name" -> testName)
 
         e.status match {
           case Status.Success => // nothing extra to report
           case Status.Error | Status.Failure =>
             teamcityReport("testFailed",
-              "name" -> e.fullyQualifiedName,
+              "name" -> testName,
               "details" -> nicelyFormatException(e.throwable)
             )
           case Status.Skipped | Status.Ignored | Status.Pending=>
-            teamcityReport("testIgnored", "name" -> e.fullyQualifiedName)
+            teamcityReport("testIgnored", "name" -> testName)
           case Status.Canceled =>
             // I can't think how this would happen and no appropriate message for Teamcity
-            println(s"Test:${e.fullyQualifiedName} was cancelled")
+            println(s"Test:$testName was cancelled")
         }
 
-        teamcityReport("testFinished", "name" -> e.fullyQualifiedName)
+        teamcityReport("testFinished", "name" -> testName)
       }
     }
   }
