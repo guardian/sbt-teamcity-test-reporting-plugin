@@ -10,7 +10,7 @@ mechanism in sbt.
 To use, add the following line to a plugins.sbt file in your project directory:
 
 ```
-addSbtPlugin("com.gu" % "sbt-teamcity-test-reporting-plugin" % "1.4")
+addSbtPlugin("com.gu" % "sbt-teamcity-test-reporting-plugin" % "1.5")
 ```
 
 It's published to the main SBT plugin repository, so no further configuration should be necessary. Note that due to a 
