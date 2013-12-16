@@ -13,12 +13,21 @@ To use, add the following line to a plugins.sbt file in your project directory:
 addSbtPlugin("com.gu" % "sbt-teamcity-test-reporting-plugin" % "1.5")
 ```
 
-It's published to the main SBT plugin repository, so no further configuration should be necessary. Note that due to a 
-change in SBT's test interface 1.3 is the latest version published for the 0.12 series of SBT.
-
 It will do nothing at all when not running under TeamCity, but
-when it is running under TeamCity (detected by the presence of the `TEAMCITY_PROJECT_NAME` environment variable)
-it will report success and failure of executed test.
+when it _is_ running under TeamCity (detected by the presence of the `TEAMCITY_PROJECT_NAME` environment variable)
+it will report success and failure of executed tests.
+
+
+SBT Versions
+------------
+
+These versions are all fairly closely equivalent, just updated to cope with changes in SBT's test interface:
+
+* **SBT v0.12** - use plugin **v1.3**
+* **SBT v0.13** - use plugin **v1.5**
+
+The plugin is published to the main SBT plugin repository, so no further configuration should be necessary. 
+
 
 Known Limitations
 =================
